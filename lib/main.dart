@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/flashcard_provider.dart';
-import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart'; // Splash screen import kora hoyeche
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +34,8 @@ class FlashcardApp extends ConsumerWidget {
         scaffoldBackgroundColor: const Color(0xFF121212),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home:
+          const SplashScreen(), // Ekhane HomeScreen er bodole SplashScreen set kora hoyeche
     );
   }
 }
