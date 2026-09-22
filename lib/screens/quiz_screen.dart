@@ -52,10 +52,11 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
   }
 
   void _flipCard() {
-    if (isFlipped)
+    if (isFlipped) {
       _animationController.reverse();
-    else
+    } else {
       _animationController.forward();
+    }
     setState(() => isFlipped = !isFlipped);
   }
 
@@ -63,46 +64,44 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
   void _toggleFavorite() {
     final currentCard = quizCards[currentIndex];
     ref.read(flashcardProvider.notifier).toggleFavorite(currentCard);
-
-    // UI sathe sathe update korar jonno
     setState(() {});
   }
 
-  // Swipe korle Next e jabar function
+  // Next Button / Swipe Left er function
   void _nextCardManual() {
     if (isTransitioning || currentIndex >= quizCards.length - 1) return;
     setState(() => isTransitioning = true);
     if (isFlipped) _flipCard();
     Future.delayed(const Duration(milliseconds: 250), () {
-      if (mounted)
+      if (mounted) {
         setState(() {
           currentIndex++;
           isTransitioning = false;
         });
+      }
     });
   }
 
-  // Swipe korle Previous e jabar function
+  // Previous Button / Swipe Right er function
   void _prevCardManual() {
     if (isTransitioning || currentIndex <= 0) return;
     setState(() => isTransitioning = true);
     if (isFlipped) _flipCard();
     Future.delayed(const Duration(milliseconds: 250), () {
-      if (mounted)
+      if (mounted) {
         setState(() {
           currentIndex--;
           isTransitioning = false;
         });
+      }
     });
   }
 
   // Swipe Detect korar function
   void _onSwipe(DragEndDetails details) {
     if (details.primaryVelocity! < -300) {
-      // Left e Swipe korle Next
       _nextCardManual();
     } else if (details.primaryVelocity! > 300) {
-      // Right e Swipe korle Previous
       _prevCardManual();
     }
   }
@@ -116,11 +115,12 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
 
     Future.delayed(const Duration(milliseconds: 400), () {
       if (currentIndex < quizCards.length - 1) {
-        if (mounted)
+        if (mounted) {
           setState(() {
             currentIndex++;
             isTransitioning = false;
           });
+        }
       } else {
         Navigator.pushReplacement(
           context,
@@ -137,12 +137,14 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (quizCards.isEmpty)
+    if (quizCards.isEmpty) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     final currentCard = quizCards[currentIndex];
     final progress = (currentIndex + 1) / quizCards.length;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = const Color(0xFF6C63FF);
 
     return Scaffold(
       appBar: AppBar(
@@ -152,7 +154,6 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
               'Quiz Mode',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            // Question Numbering Add Kora Hoyeche
             Text(
               'Question ${currentIndex + 1} of ${quizCards.length}',
               style: TextStyle(
@@ -188,10 +189,14 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
               value: progress,
               minHeight: 8,
               borderRadius: BorderRadius.circular(10),
+              backgroundColor: isDark
+                  ? Colors.grey.shade800
+                  : Colors.grey.shade300,
+              color: primaryColor,
             ),
             const SizedBox(height: 30),
 
-            // GestureDetector add kora hoyeche Swipe er jonno
+            // 3D Card with Swipe Gesture
             Expanded(
               flex: 3,
               child: GestureDetector(
@@ -219,7 +224,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                               child: _buildCardSide(
                                 currentCard.answer,
                                 "ANSWER",
-                                const Color(0xFF6C63FF),
+                                primaryColor,
                                 textColor: Colors.white,
                               ),
                             ),
@@ -231,51 +236,132 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
 
             const SizedBox(height: 30),
 
-            if (!isFlipped)
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(200, 55),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
+            // Navigation and Action Buttons Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Previous Button
+                FilledButton.tonal(
+                  style: FilledButton.styleFrom(
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(16),
+                    backgroundColor: isDark
+                        ? Colors.grey.shade800
+                        : Colors.grey.shade200,
+                    foregroundColor: isDark ? Colors.white : Colors.black87,
+                  ),
+                  onPressed: (currentIndex > 0 && !isTransitioning)
+                      ? _prevCardManual
+                      : null,
+                  child: const Icon(Icons.arrow_back_rounded, size: 24),
+                ),
+
+                // Center Action Buttons (Show Answer OR Knew it/Forgot)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: !isFlipped
+                        ? FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              elevation: 0,
+                            ),
+                            onPressed: isTransitioning ? null : _flipCard,
+                            icon: const Icon(Icons.visibility_rounded),
+                            label: const Text(
+                              "Show Answer",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    foregroundColor: Colors.redAccent,
+                                    side: const BorderSide(
+                                      color: Colors.redAccent,
+                                      width: 1.5,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  onPressed: () => _handleAnswer(false),
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    size: 20,
+                                  ),
+                                  label: const Text(
+                                    "Forgot",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: FilledButton.icon(
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    backgroundColor: const Color(
+                                      0xFF10B981,
+                                    ), // Emerald Green
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  onPressed: () => _handleAnswer(true),
+                                  icon: const Icon(
+                                    Icons.check_rounded,
+                                    size: 20,
+                                  ),
+                                  label: const Text(
+                                    "Knew it",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
-                onPressed: isTransitioning ? null : _flipCard,
-                icon: const Icon(Icons.visibility),
-                label: const Text(
-                  "Show Answer",
-                  style: TextStyle(fontSize: 16),
+
+                // Next Button
+                FilledButton.tonal(
+                  style: FilledButton.styleFrom(
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(16),
+                    backgroundColor: isDark
+                        ? Colors.grey.shade800
+                        : Colors.grey.shade200,
+                    foregroundColor: isDark ? Colors.white : Colors.black87,
+                  ),
+                  onPressed:
+                      (currentIndex < quizCards.length - 1 && !isTransitioning)
+                      ? _nextCardManual
+                      : null,
+                  child: const Icon(Icons.arrow_forward_rounded, size: 24),
                 ),
-              )
-            else
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 15,
-                      ),
-                      foregroundColor: Colors.red,
-                    ),
-                    onPressed: () => _handleAnswer(false),
-                    icon: const Icon(Icons.close_rounded),
-                    label: const Text("Forgot"),
-                  ),
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 15,
-                      ),
-                      backgroundColor: Colors.green,
-                    ),
-                    onPressed: () => _handleAnswer(true),
-                    icon: const Icon(Icons.check_rounded),
-                    label: const Text("Knew it!"),
-                  ),
-                ],
-              ),
+              ],
+            ),
+
             const Spacer(),
           ],
         ),
@@ -299,14 +385,18 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6C63FF).withOpacity(0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: const Color(0xFF6C63FF).withOpacity(isDark ? 0.3 : 0.15),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
         ],
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.transparent,
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -314,26 +404,42 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: finalTextColor.withOpacity(0.7),
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: finalTextColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: finalTextColor.withOpacity(0.8),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
               IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: finalTextColor.withOpacity(0.05),
+                ),
                 icon: Icon(
                   Icons.volume_up_rounded,
-                  color: finalTextColor.withOpacity(0.7),
+                  color: finalTextColor.withOpacity(0.9),
                 ),
                 onPressed: () => _speak(text),
               ),
             ],
           ),
+          const SizedBox(height: 20),
           Expanded(
             child: Center(
               child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
                 child: Text(
                   text,
                   textAlign: TextAlign.center,
